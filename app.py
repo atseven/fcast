@@ -163,9 +163,9 @@ def upload_predictions(dataframe, dbx_ob, path):
 
 @app.route('/')
 def predict_forecast():
-    filepath = request.args.get('filepath')
+    filepath = str(request.args.get('filepath'))
     days=request.args.get('days')
-    access_token=request.args.get('token')
+    access_token= str(request.args.get('token'))
 
     print("\n\nPlease wait, future sales are predicting...\n")
 
