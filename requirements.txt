@@ -4,7 +4,7 @@ gunicorn==19.9.0
 numpy>=1.9.2
 matplotlib>=1.4.3
 Pandas>=0.19
-fbprophet==0.7.1
+fbprophet==0.6
 datetime==4.4
 seaborn==0.11.2
 dropbox==11.27.0
