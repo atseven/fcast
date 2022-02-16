@@ -138,8 +138,8 @@ def upload_predictions(dataframe, dbx_ob, path):
         mode=dropbox.files.WriteMode.overwrite
     )
 
-@app.route('/')
-def predict_forecast():
+@app.route('/forecast')
+def forecast():
     filepath = str(request.args.get('filepath'))
     days=int(request.args.get('days'))
     access_token= str(request.args.get('token'))
