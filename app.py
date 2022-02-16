@@ -86,7 +86,7 @@ def buildModel(df):
   return model
 
 def predict(mod, days=120):
-  future = mod.make_future_dataframe(periods=str(days), freq='D')
+  future = mod.make_future_dataframe(periods=days, freq='D')
   predictions = mod.predict(future)
   return predictions
 
