@@ -1,26 +1,3 @@
-# from flask import Flask, request, send_file
-# import requests
-# app = Flask(__name__)
-
-# @app.route('/')
-# def user_download():
-#     url = request.args['url']  # user provides url in query string
-#     r = requests.get(url)
-
-#     # write to a file in the app's instance folder
-#     # come up with a better file name
-#     with app.open_instance_resource('downloaded_file', 'wb') as f:
-#         f.write(r.content)
-        
-# # @app.route('/<path:path>')
-# # def forecast(path):
-# # #     path = request.args.get('filePath')
-# #     return send_file(path[5:], as_attachment=True)
-# # #     return {'name': request.args.get('name'), 'time': request.args.get('time')}
-
-# if __name__ == "__main__":
-#     app.run()
-
 from flask import Flask, request, send_file
 import requests
 from fbprophet import Prophet # Prophet modelling library
@@ -164,7 +141,7 @@ def upload_predictions(dataframe, dbx_ob, path):
 @app.route('/')
 def predict_forecast():
     filepath = str(request.args.get('filepath'))
-    days=request.args.get('days')
+    days=int(request.args.get('days'))
     access_token= str(request.args.get('token'))
 
     print("\n\nPlease wait, future sales are predicting...\n")
