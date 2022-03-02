@@ -5,13 +5,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
-import seaborn as sns
+import seaborn as snsa
 from datetime import datetime
 import dropbox
 import io
 from PIL import Image
+# from flask_ngrok import run_with_ngrok
 
 app = Flask(__name__)
+# run_with_ngrok(app)   
 
 def preprocessing(df):
   try:
@@ -125,6 +127,7 @@ def predictionPlot(x, y, filename="EAN", dbx_ob="", path="/forecast", fileName="
       path=path + "/" + fileName + ".png",
       mode=dropbox.files.WriteMode.overwrite
   )
+
   # im.show()
   buf.close()
 
@@ -138,13 +141,22 @@ def upload_predictions(dataframe, dbx_ob, path):
         mode=dropbox.files.WriteMode.overwrite
     )
 
+    result = dbx_ob.files_get_temporary_link(path + "/Future Sales.csv")
+    return result.link
+
 @app.route('/forecast')
 def forecast():
     filepath = str(request.args.get('filepath'))
     days=int(request.args.get('days'))
-    access_token= str(request.args.get('token'))
+    access_token=str(request.args.get('token'))
 
-    print("\n\nPlease wait, future sales are predicting...\n")
+    # filepath="https://www.dropbox.com/s/qyuaf43x6daeyg6/8720256091356.csv?dl=1"
+    # days=180
+    # access_token="IbV88BhKOuMAAAAAAAAAAXnDe9ByZ92bviQ5AR1xnjxR2VoXogoSglB8mxAfpu0T"
+
+    print(filepath, days, access_token)
+
+    # print("\n\nPlease wait, future sales are predicting...\n")
 
     data = pd.read_csv(filepath)
     data, filename = preprocessing(data)
@@ -155,23 +167,22 @@ def forecast():
 
     dbx.files_create_folder_v2("/forecast/" + dt_string)
 
-    plotData(data, dbx, path="/forecast/" + dt_string)
+    # plotData(data, dbx, path="/forecast/" + dt_string)
 
     model = buildModel(data)
     predictions = predict(model, days)
 
-    trendPlot(model, predictions, dbx, path="/forecast/" + dt_string)
+    # trendPlot(model, predictions, dbx, path="/forecast/" + dt_string)
 
-    predictionPlot(predictions['ds'], predictions['yhat'], "Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Prediction Plot 1")
-    predictionPlot(predictions['ds'], predictions['yhat_upper'], "Max Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Max Prediction Plot")
+    # predictionPlot(predictions['ds'], predictions['yhat'], "Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Prediction Plot 1")
+    # predictionPlot(predictions['ds'], predictions['yhat_upper'], "Max Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Max Prediction Plot")
 
     predictions = predictions[['ds', 'yhat', 'yhat_upper']].round(decimals = 2)
     predictions.columns = ['Date', 'Quantity', 'Max Quantity']
 
-    upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
+    pred_link = upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
 
-    return {'Success': "Forecast predicted !"}
+    return {'predictions': pred_link}
 
 if __name__ == "__main__":
     app.run()
-
