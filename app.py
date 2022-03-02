@@ -184,8 +184,11 @@ def forecast():
       pred_link = upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
 
       return {'predictions': pred_link}
-    except:
-      return {'error': "Something went wrong"}
+    except Exception as e:
+      return {
+              'error': "Something went wrong",
+              'desc': e
+            }
 
 if __name__ == "__main__":
     app.run()
