@@ -185,10 +185,8 @@ def forecast():
 
       return {'predictions': pred_link}
     except Exception as e:
-      return {
-              'error': "Something went wrong",
-              'desc': e
-            }
+      print("error : ", e)
+      return {'error': "Something went wrong"}
 
 if __name__ == "__main__":
     app.run()
