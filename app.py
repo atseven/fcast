@@ -146,43 +146,46 @@ def upload_predictions(dataframe, dbx_ob, path):
 
 @app.route('/forecast')
 def forecast():
-    filepath = str(request.args.get('filepath'))
-    days=int(request.args.get('days'))
-    access_token=str(request.args.get('token'))
+    try:
+      filepath = str(request.args.get('filepath'))
+      days=int(request.args.get('days'))
+      access_token=str(request.args.get('token'))
 
-    # filepath="https://www.dropbox.com/s/qyuaf43x6daeyg6/8720256091356.csv?dl=1"
-    # days=180
-    # access_token="IbV88BhKOuMAAAAAAAAAAXnDe9ByZ92bviQ5AR1xnjxR2VoXogoSglB8mxAfpu0T"
+      # filepath="https://www.dropbox.com/s/qyuaf43x6daeyg6/8720256091356.csv?dl=1"
+      # days=180
+      # access_token="IbV88BhKOuMAAAAAAAAAAXnDe9ByZ92bviQ5AR1xnjxR2VoXogoSglB8mxAfpu0T"
 
-    print(filepath, days, access_token)
+      print(filepath, days, access_token)
 
-    # print("\n\nPlease wait, future sales are predicting...\n")
+      # print("\n\nPlease wait, future sales are predicting...\n")
 
-    data = pd.read_csv(filepath)
-    data, filename = preprocessing(data)
+      data = pd.read_csv(filepath)
+      data, filename = preprocessing(data)
 
-    dbx = dropbox.Dropbox(access_token)
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y%H:%M:%S")
+      dbx = dropbox.Dropbox(access_token)
+      now = datetime.now()
+      dt_string = now.strftime("%d/%m/%Y%H:%M:%S")
 
-    dbx.files_create_folder_v2("/forecast/" + dt_string)
+      dbx.files_create_folder_v2("/forecast/" + dt_string)
 
-    # plotData(data, dbx, path="/forecast/" + dt_string)
+      # plotData(data, dbx, path="/forecast/" + dt_string)
 
-    model = buildModel(data)
-    predictions = predict(model, days)
+      model = buildModel(data)
+      predictions = predict(model, days)
 
-    # trendPlot(model, predictions, dbx, path="/forecast/" + dt_string)
+      # trendPlot(model, predictions, dbx, path="/forecast/" + dt_string)
 
-    # predictionPlot(predictions['ds'], predictions['yhat'], "Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Prediction Plot 1")
-    # predictionPlot(predictions['ds'], predictions['yhat_upper'], "Max Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Max Prediction Plot")
+      # predictionPlot(predictions['ds'], predictions['yhat'], "Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Prediction Plot 1")
+      # predictionPlot(predictions['ds'], predictions['yhat_upper'], "Max Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Max Prediction Plot")
 
-    predictions = predictions[['ds', 'yhat', 'yhat_upper']].round(decimals = 2)
-    predictions.columns = ['Date', 'Quantity', 'Max Quantity']
+      predictions = predictions[['ds', 'yhat', 'yhat_upper']].round(decimals = 2)
+      predictions.columns = ['Date', 'Quantity', 'Max Quantity']
 
-    pred_link = upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
+      pred_link = upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
 
-    return {'predictions': pred_link}
+      return {'predictions': pred_link}
+    except:
+      return {'error': "Something went wrong"}
 
 if __name__ == "__main__":
     app.run()
