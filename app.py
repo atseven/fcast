@@ -1,19 +1,15 @@
 from flask import Flask, request, send_file
 import requests
-from fbprophet import Prophet # Prophet modelling library
+from fbprophet import Prophet 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
-import seaborn as snsa
+import seaborn as sns
 from datetime import datetime
-import dropbox
-import io
-from PIL import Image
-# from flask_ngrok import run_with_ngrok
 
 app = Flask(__name__)
-# run_with_ngrok(app)   
+run_with_ngrok(app)   
 
 def preprocessing(df):
   try:
@@ -43,21 +39,6 @@ def plotData(df, dbx_ob, path):
   plt.xticks(rotation=45)
   plt.plot(df['ds'], df['y'] )
 
-  buf = io.BytesIO()
-  plt.savefig(buf, format='png')
-  buf.seek(0)
-  im = Image.open(buf)
-  buf = io.BytesIO()
-  im.save(buf, format='png')
-  byte_im = buf.getvalue()
-
-  dbx_ob.files_upload(
-      f=byte_im,
-      path=path + "/Original Data.png",
-      mode=dropbox.files.WriteMode.overwrite
-  )
-  buf.close()
-
 
 def buildModel(df):
   model = Prophet(interval_width=0.95, yearly_seasonality=True) 
@@ -72,39 +53,6 @@ def predict(mod, days=120):
 def trendPlot(mod, predictions, dbx_ob, path):
   plot1 = mod.plot(predictions)
 
-  buf = io.BytesIO()
-  plot1.savefig(buf, format='png')
-  buf.seek(0)
-  im = Image.open(buf)
-  buf = io.BytesIO()
-  im.save(buf, format='png')
-  byte_im = buf.getvalue()
-
-  dbx_ob.files_upload(
-      f=byte_im,
-      path= path + "/Prediction Plot 2.png",
-      mode=dropbox.files.WriteMode.overwrite
-  )
-  # im.show()
-  buf.close()
-
-  plot2 = mod.plot_components(predictions)
-  buf = io.BytesIO()
-  plot2.savefig(buf, format='png')
-  buf.seek(0)
-  im = Image.open(buf)
-  buf = io.BytesIO()
-  im.save(buf, format='png')
-  byte_im = buf.getvalue()
-
-  dbx_ob.files_upload(
-      f=byte_im,
-      path=path + "/Trend Plot.png",
-      mode=dropbox.files.WriteMode.overwrite
-  )
-  # im.show()
-  buf.close()
-
 def predictionPlot(x, y, filename="EAN", dbx_ob="", path="/forecast", fileName=""):
   sns.set()
   plt.figure(figsize=(20,5))
@@ -114,61 +62,54 @@ def predictionPlot(x, y, filename="EAN", dbx_ob="", path="/forecast", fileName="
   plt.xticks(rotation=45)
   plt.plot(x, y)
 
-  buf = io.BytesIO()
-  plt.savefig(buf, format='png')
-  buf.seek(0)
-  im = Image.open(buf)
-  buf = io.BytesIO()
-  im.save(buf, format='png')
-  byte_im = buf.getvalue()
+def upload_predictions(dataframe, path, storage, auth):
 
-  dbx_ob.files_upload(
-      f=byte_im,
-      path=path + "/" + fileName + ".png",
-      mode=dropbox.files.WriteMode.overwrite
-  )
+  df_string = dataframe.to_csv(index=False)
+  db_bytes = bytes(df_string, 'utf8')
 
-  # im.show()
-  buf.close()
+  fileName = "Future Prices.csv"
+  storage.child(path + fileName).put(db_bytes)
 
-def upload_predictions(dataframe, dbx_ob, path):
+  # Create Authentication user account in firebase
 
-    df_string = dataframe.to_csv(index=False)
-    db_bytes = bytes(df_string, 'utf8')
-    dbx_ob.files_upload(
-        f=db_bytes,
-        path=path + "/Future Sales.csv",
-        mode=dropbox.files.WriteMode.overwrite
-    )
+  # Enter your user account details 
+  email = "alwaysstockedj@gmail.com"
+  password = "Rana2020win"
 
-    result = dbx_ob.files_get_temporary_link(path + "/Future Sales.csv")
-    return result.link
+  user = auth.sign_in_with_email_and_password(email, password)
+
+  csvUrl = storage.child(path + fileName).get_url(user['idToken'])
+  return csvUrl
 
 @app.route('/forecast')
 def forecast():
     try:
       filepath = str(request.args.get('filepath'))
       days=int(request.args.get('days'))
-      access_token=str(request.args.get('token'))
+      
+      print(filepath, days)
 
-      # filepath="https://www.dropbox.com/s/qyuaf43x6daeyg6/8720256091356.csv?dl=1"
-      # days=180
-      # access_token="IbV88BhKOuMAAAAAAAAAAXnDe9ByZ92bviQ5AR1xnjxR2VoXogoSglB8mxAfpu0T"
-
-      print(filepath, days, access_token)
-
-      # print("\n\nPlease wait, future sales are predicting...\n")
+      print("\n\nPlease wait, future sales are predicting...\n")
 
       data = pd.read_csv(filepath)
       data, filename = preprocessing(data)
 
-      dbx = dropbox.Dropbox(access_token)
+      firebaseConfig = {
+        "apiKey": "AIzaSyAil4rCL7FMyMSBShnSoYWtHrgLubx47T4",
+        "authDomain": "forecast-v1.firebaseapp.com",
+        "projectId": "forecast-v1",
+        "storageBucket": "forecast-v1.appspot.com",
+        "messagingSenderId": "421731791843",
+        "appId": "1:421731791843:web:06f958dbf0ed4c8380a6d6",
+        "databaseURL":"gs://forecast-v1.appspot.com"
+      };
+
+      firebase = pyrebase.initialize_app(firebaseConfig)
+      storage = firebase.storage()
+      auth = firebase.auth()
+
       now = datetime.now()
       dt_string = now.strftime("%d/%m/%Y%H:%M:%S")
-
-      dbx.files_create_folder_v2("/forecast/" + dt_string)
-
-      # plotData(data, dbx, path="/forecast/" + dt_string)
 
       model = buildModel(data)
       predictions = predict(model, days)
@@ -181,9 +122,10 @@ def forecast():
       predictions = predictions[['ds', 'yhat', 'yhat_upper']].round(decimals = 2)
       predictions.columns = ['Date', 'Quantity', 'Max Quantity']
 
-      pred_link = upload_predictions(predictions, dbx, path="/forecast/" + dt_string)
+      pred_link = upload_predictions(predictions, path="predictions/" + dt_string + "/", storage=storage, auth=auth)
 
       return {'predictions': pred_link}
+
     except Exception as e:
       print("error : ", e)
       return {'error': "Something went wrong"}
