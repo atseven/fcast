@@ -120,7 +120,7 @@ def forecast():
       # predictionPlot(predictions['ds'], predictions['yhat_upper'], "Max Possible Future Sales", dbx, path="/forecast/" + dt_string, fileName="Max Prediction Plot")
 
       predictions = predictions[['ds', 'yhat', 'yhat_upper']].round(decimals = 2)
-      predictions.columns = ['Date', 'Quantity', 'Max Quantity']
+      predictions.columns = ['Date', 'Quantity', 'max_quantity']
 
       pred_link = upload_predictions(predictions, path="predictions/" + dt_string + "/", storage=storage, auth=auth)
 
