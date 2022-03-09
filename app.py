@@ -9,7 +9,6 @@ import seaborn as sns
 from datetime import datetime
 
 app = Flask(__name__)
-run_with_ngrok(app)   
 
 def preprocessing(df):
   try:
