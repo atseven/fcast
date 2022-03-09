@@ -1,5 +1,5 @@
 Flask==1.1.1
-requests==2.23.0
+requests==2.11.1
 gunicorn==19.9.0
 numpy>=1.9.2
 matplotlib>=1.4.3
@@ -7,7 +7,6 @@ Pandas>=0.19
 fbprophet==0.7.1
 datetime==4.4
 seaborn==0.11.2
-dropbox==11.27.0
 pillow==7.1.2
 pystan==2.19.1.1
 Cython>=0.22
