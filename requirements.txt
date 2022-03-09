@@ -11,3 +11,4 @@ dropbox==11.27.0
 pillow==7.1.2
 pystan==2.19.1.1
 Cython>=0.22
+pyrebase==3.0.27
